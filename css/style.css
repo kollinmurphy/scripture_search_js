@@ -1,0 +1,32 @@
+.bold {
+    font-weight: 900;
+}
+
+.reference {
+    font-style: italic;
+}
+
+#mainContainer {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+}
+
+#searchDetails {
+    background-color: rgb(240,240,240);
+    border-radius: 6px;
+    padding: 20px;
+    width: 80%;
+}
+
+#searchResults {
+    background-color: rgb(220,220,220);
+    border-radius: 6px;
+    margin: 20px;
+    padding: 20px;
+    width: 80%;
+}
+
+span {
+    display: inline;
+}
