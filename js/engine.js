@@ -47,22 +47,32 @@ class Engine {
 
     generateResults(result) {
         let r = "";
-        // let totalOccurrences = 0;
         for (let i = 0; i < result.list.length; i++) {
             let txt = result.list[i].text.split(" ");
             for (let o = 0; o < result.list[i].occurrences.length; o++) {
-                // totalOccurrences++;
-                txt[result.list[i].occurrences[o]] = "<span class='bold'>" + txt[result.list[i].occurrences[o]] + "</span>";
+                let splitOccurrence = result.list[i].occurrences[o].toString().split(".");
+                if (splitOccurrence.length == 1) {
+                    txt[result.list[i].occurrences[o]] = "<span class='bold'>" + txt[result.list[i].occurrences[o]] + "</span>";
+                } else {
+                    txt[splitOccurrence[0]] = boldSubstr(txt[splitOccurrence[0]], splitOccurrence[1], splitOccurrence[2]);
+                }
             }
             r += "<p><span class='reference'><a href='" + createChurchLink(result.list[i].reference) + "'>" + result.list[i].reference;
             r += "</a></span><br>" + txt.join(" ") + "</p>";
         }
         let preamble = "";
         preamble += (result.verseCount != 1) ? result.verseCount + " results" : "1 result";
-        // preamble += ", " + ((totalOccurrences === 1) ? "1 occurrence" : totalOccurrences + " occurrences");
         preamble += " for <span class='reference'>" + this.keywords + "</span><br><br>";
         return preamble + r;
     }
+}
+
+function boldSubstr(str, start, len) {
+    let end = parseInt(start) + parseInt(len);
+    let pre = str.substring(0, start);
+    let bold = str.substring(start, end);
+    let post = str.substring(end);
+    return pre + "<span class='bold'>" + bold + "</span>" + post;
 }
 
 var bookCodes = {
@@ -295,6 +305,20 @@ function evalVerse(thisVerse, arrayKeywords, results) {
                 if (keywordIndex !== -1) {
                     found.wordChecks[keywordIndex] = true;
                     found.matchingWords.push(word);
+                } else {
+                    // if length of word is greater than 2, search for word as a substr of key
+                    let txt = thisVerse.text.split(" ");
+                    if (txt[word].length > 2) {
+                        for (let i = 0; i < arrayKeywords[keyphrase].list.length; i++) {
+                            if (arrayKeywords[keyphrase].list[i].length > 2) {
+                                let substrIndex = txt[word].toLowerCase().indexOf(arrayKeywords[keyphrase].list[i]);
+                                if (substrIndex !== -1) {
+                                    found.wordChecks[i] = true;
+                                    found.matchingWords.push(word + "." + substrIndex + "." + arrayKeywords[keyphrase].list[i].length);
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
