@@ -50,15 +50,14 @@ class Engine {
         for (let i = 0; i < result.list.length; i++) {
             let txt = result.list[i].text.split(" ");
             for (let o = 0; o < result.list[i].occurrences.length; o++) {
-                let splitOccurrence = result.list[i].occurrences[o].toString().split(".");
-                if (splitOccurrence.length == 1) {
-                    txt[result.list[i].occurrences[o]] = "<span class='bold'>" + txt[result.list[i].occurrences[o]] + "</span>";
+                if (!result.list[i].occurrences[o].hasOwnProperty("start")) {
+                    txt[result.list[i].occurrences[o].word] = new BoldedWord(txt[result.list[i].occurrences[o].word], 0, txt[result.list[i].occurrences[o].word].length);
                 } else {
-                    txt[splitOccurrence[0]] = boldSubstr(txt[splitOccurrence[0]], splitOccurrence[1], splitOccurrence[2]);
+                    txt[result.list[i].occurrences[o].word] = new BoldedWord(txt[result.list[i].occurrences[o].word], result.list[i].occurrences[o].start, result.list[i].occurrences[o].len);
                 }
             }
-            r += "<p><span class='reference'><a href='" + createChurchLink(result.list[i].reference) + "'>" + result.list[i].reference;
-            r += "</a></span><br>" + txt.join(" ") + "</p>";
+            r += "<p><span class='reference'><a href='" + createChurchLink(result.list[i].reference) + "' target='_blank'>" + result.list[i].reference;
+            r += "</a></span><br>" + joinWords(txt) + "</p>";
         }
         let preamble = "";
         preamble += (result.verseCount != 1) ? result.verseCount + " results" : "1 result";
@@ -67,12 +66,15 @@ class Engine {
     }
 }
 
-function boldSubstr(str, start, len) {
-    let end = parseInt(start) + parseInt(len);
-    let pre = str.substring(0, start);
-    let bold = str.substring(start, end);
-    let post = str.substring(end);
-    return pre + "<span class='bold'>" + bold + "</span>" + post;
+function joinWords(txt) {
+    s = "";
+    for (let i = 0; i < txt.length; i++) {
+        s += txt[i].toString();
+        if (i != txt.length - 1) {
+            s += " ";
+        }
+    }
+    return s;
 }
 
 var bookCodes = {
@@ -278,7 +280,7 @@ function evalVerse(thisVerse, arrayKeywords, results) {
 
                 if (thisVerse.parsedText[word] === arrayKeywords[keyphrase].list[found.word]) {
                     found.word++;
-                    found.iterationMatches.push(word);
+                    found.iterationMatches.push({word: word});
                     if (found.iterationMatches.length == arrayKeywords[keyphrase].list.length) {
                         found.matchingWords = found.matchingWords.concat(found.iterationMatches);
                         found.iterationMatches = [];
@@ -304,7 +306,7 @@ function evalVerse(thisVerse, arrayKeywords, results) {
                 let keywordIndex = arrayKeywords[keyphrase].list.indexOf(thisVerse.parsedText[word]);
                 if (keywordIndex !== -1) {
                     found.wordChecks[keywordIndex] = true;
-                    found.matchingWords.push(word);
+                    found.matchingWords.push({word: word});
                 } else {
                     // if length of word is greater than 2, search for word as a substr of key
                     let txt = thisVerse.text.split(" ");
@@ -314,7 +316,12 @@ function evalVerse(thisVerse, arrayKeywords, results) {
                                 let substrIndex = txt[word].toLowerCase().indexOf(arrayKeywords[keyphrase].list[i]);
                                 if (substrIndex !== -1) {
                                     found.wordChecks[i] = true;
-                                    found.matchingWords.push(word + "." + substrIndex + "." + arrayKeywords[keyphrase].list[i].length);
+                                    found.matchingWords.push({
+                                        word: word,
+                                        start: substrIndex,
+                                        len: arrayKeywords[keyphrase].list[i].length
+                                    });
+                                    
                                 }
                             }
                         }
